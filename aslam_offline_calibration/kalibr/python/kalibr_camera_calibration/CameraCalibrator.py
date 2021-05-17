@@ -273,7 +273,7 @@ class CameraCalibration(object):
         
         if self.estimator_return_value.numIterations >= self.optimizerOptions.maxIterations:
             sm.logError("Did not converge in maxIterations... restarting...")
-            raise OptimizationDiverged
+            #raise OptimizationDiverged
         
         success = self.estimator_return_value.batchAccepted
         if success:
