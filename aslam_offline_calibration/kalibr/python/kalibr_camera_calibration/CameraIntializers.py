@@ -70,8 +70,8 @@ def stereoCalibrate(camL_geometry, camH_geometry, obslist, distortionActive=Fals
         target_pose_dvs.append(target_pose_dv)
     
     #add camera dvs
-    camL_geometry.setDvActiveStatus(True, distortionActive, False)
-    camH_geometry.setDvActiveStatus(True, distortionActive, False)
+    camL_geometry.setDvActiveStatus(False, False, False)
+    camH_geometry.setDvActiveStatus(False, False, False)
     problem.addDesignVariable(camL_geometry.dv.distortionDesignVariable())
     problem.addDesignVariable(camL_geometry.dv.projectionDesignVariable())
     problem.addDesignVariable(camL_geometry.dv.shutterDesignVariable())
@@ -283,7 +283,7 @@ def solveFullBatch(cameras, baseline_guesses, graph):
     
     #add camera dvs
     for cam in cameras:
-        cam.setDvActiveStatus(True, True, False)
+        cam.setDvActiveStatus(False, False, False)
         problem.addDesignVariable(cam.dv.distortionDesignVariable())
         problem.addDesignVariable(cam.dv.projectionDesignVariable())
         problem.addDesignVariable(cam.dv.shutterDesignVariable())

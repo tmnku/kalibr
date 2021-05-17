@@ -170,6 +170,7 @@ def main():
             #create camera
             cameraModel = cameraModels[modelName]
             cam = kcc.CameraGeometry(cameraModel, targetConfig, dataset, verbose=(parsed.verbose or parsed.showextraction))
+            cam.setDvActiveStatus(False, False, False)
                 
             #extract the targets
             multithreading = not (parsed.verbose or parsed.showextraction)
@@ -184,6 +185,15 @@ def main():
             #initialize the intrinsics
             if not cam.initGeometryFromObservations(observations):
                 raise RuntimeError("Could not initialize the intrinsics for camera with topic: {0}. Try to use --verbose and check whether the calibration target extraction is successful.".format(topic))
+            if topic == '/camera_fr/image_raw':
+                projection_parameters = np.array([ 958.52891441,  958.96010062,  942.99151455,  530.65626583])
+                distortion_parameters = np.array([-0.0470827,   0.03875457, -0.05329628,  0.02248648])
+            else:
+                projection_parameters = np.array([ 964.95906655,  963.62286454,  934.12950576,  554.10826309])
+                distortion_parameters = np.array([-0.02215442, -0.01881507,  0.00199917,  0.00470936])
+            #cam.geometry.projection().setParameters(np.hstack((projection_parameters, distortion_parameters)).reshape((8,-1)), True, True, False)
+            cam.geometry.projection().setParameters(projection_parameters.reshape((4,-1)))
+            cam.geometry.projection().distortion().setParameters(distortion_parameters.reshape((4,-1)))
             
             print "\tProjection initialized to: %s" % cam.geometry.projection().getParameters().flatten()
             print "\tDistortion initialized to: %s" % cam.geometry.projection().distortion().getParameters().flatten()
@@ -244,7 +254,7 @@ def main():
             #linearSolverOptions.qrTol = 0.0
             
             optimizerOptions = calibrator.estimator.getOptimizerOptions()
-            optimizerOptions.maxIterations = 50
+            optimizerOptions.maxIterations = 100
             optimizerOptions.verbose = parsed.verbose
             verbose = parsed.verbose
         
@@ -423,6 +433,7 @@ def main():
         except kcc.OptimizationDiverged:
             restartAttempts-=1
             sm.logWarn("Optimization diverged possibly due to a bad initialization. (Do the models fit the lenses well?)")
+            break
             
             if restartAttempts==0:
                 sm.logError("Max. attemps reached... Giving up...")
