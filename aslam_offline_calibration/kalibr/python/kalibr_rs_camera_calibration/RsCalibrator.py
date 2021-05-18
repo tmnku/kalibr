@@ -464,3 +464,8 @@ class RsCalibrator(object):
         print proj.getParameters().flatten()
         print "Distortion:"
         print dist.getParameters().flatten()
+
+    def get_result():
+        proj = self.__camera_dv.projectionDesignVariable().value()
+        dist = self.__camera_dv.distortionDesignVariable().value()
+        return proj.getParameters().flatten(), dist.getParameters().flatten()

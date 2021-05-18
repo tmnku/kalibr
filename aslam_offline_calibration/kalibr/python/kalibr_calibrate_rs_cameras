@@ -20,6 +20,7 @@ import argparse
 import sys
 import random
 import signal
+import yaml
 
 np.set_printoptions(suppress=True)
 
@@ -90,6 +91,7 @@ def __parseArgs():
     groupSource.add_argument('--bag', dest='bagfile', help='The bag file with the data.')
     groupSource.add_argument('--topic', dest='topic', help='The image topic.', required=True)
     groupSource.add_argument('--bag-from-to', metavar='bag_from_to', type=float, nargs=2, help='Use the bag data starting from up to this time [s].')
+    groupSource.add_argument('--intrinsics', dest='intrinsics', help='Intrinsics yaml file. Result will be appended to file.')
 
     groupTarget = parser.add_argument_group('Calibration target configuration')
     groupTarget.add_argument('--target', dest='targetYaml', help='Calibration target configuration as yaml file.', required=True)
@@ -172,6 +174,13 @@ def main():
     ## Calibrate
     calibrator = rscc.RsCalibrator()
     calibrator.calibrate(cameraGeometry, observations, config)
+
+    K, D = calibrator.get_result()
+    yaml_dict = dict()
+    yaml_dict[parsed.topic]['K'] = K.tolist()
+    yaml_dict[parsed.topic]['D'] = D.tolist()
+    with open(parsed.intrinsics, 'w') as f:
+        yaml.safe_dump(yaml_dict, f)
 
 if __name__ == "__main__":
     try:
