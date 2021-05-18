@@ -160,7 +160,7 @@ def main():
     obsdb = kcc.ObservationDatabase(parsed.max_delta_approxsync)
 
     with open(parsed.intrinsics) as f:
-        intrinsics = yaml.load(f, Loader=yaml.FullLoader)
+        intrinsics = yaml.safe_load(f)
         
     for cam_id in range(0, numCams):
         topic = parsed.topics[cam_id]
@@ -190,13 +190,14 @@ def main():
             #initialize the intrinsics
             # if not cam.initGeometryFromObservations(observations):
                 #raise RuntimeError("Could not initialize the intrinsics for camera with topic: {0}. Try to use --verbose and check whether the calibration target extraction is successful.".format(topic))
+            cam.initGeometryFromObservations(observations)
             projection_parameters = np.array(intrinsics[topic]['K'])
             distortion_parameters = np.array(intrinsics[topic]['D'])
 
             #cam.geometry.projection().setParameters(np.hstack((projection_parameters, distortion_parameters)).reshape((8,-1)), True, True, False)
             cam.geometry.projection().setParameters(projection_parameters.reshape((4,-1)))
             cam.geometry.projection().distortion().setParameters(distortion_parameters.reshape((4,-1)))
-            cam.isGeometryInitialized = True
+            #cam.isGeometryInitialized = True
             
             print "\tProjection initialized to: %s" % cam.geometry.projection().getParameters().flatten()
             print "\tDistortion initialized to: %s" % cam.geometry.projection().distortion().getParameters().flatten()
