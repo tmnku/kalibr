@@ -19,6 +19,7 @@ import argparse
 import sys
 import random
 import signal
+import yaml
 
 np.set_printoptions(suppress=True)
 
@@ -84,6 +85,7 @@ def parseArgs():
     groupSource.add_argument('--bag', dest='bagfile', help='The bag file with the data')
     groupSource.add_argument('--topics', nargs='+', dest='topics', help='The list of image topics', required=True)
     groupSource.add_argument('--bag-from-to', metavar='bag_from_to', type=float, nargs=2, help='Use the bag data starting from up to this time [s]')
+    groupSource.add_argument('--intrinsics', dest='intrinsics', help='Yaml file containing intrinsics parameters for each camera')
     
     groupTarget = parser.add_argument_group('Calibration target configuration')
     groupTarget.add_argument('--target', dest='targetYaml', help='Calibration target configuration as yaml file', required=True)
@@ -156,6 +158,9 @@ def main():
     numCams = len(parsed.topics)
 
     obsdb = kcc.ObservationDatabase(parsed.max_delta_approxsync)
+
+    with open(parsed.intrinsics) as f:
+        intrinsics = yaml.load(f, Loader=yaml.FullLoader)
         
     for cam_id in range(0, numCams):
         topic = parsed.topics[cam_id]
@@ -183,17 +188,15 @@ def main():
                 obsdb.addObservation(cam_id, obs)
 
             #initialize the intrinsics
-            if not cam.initGeometryFromObservations(observations):
-                raise RuntimeError("Could not initialize the intrinsics for camera with topic: {0}. Try to use --verbose and check whether the calibration target extraction is successful.".format(topic))
-            if topic == '/camera_fr/image_raw':
-                projection_parameters = np.array([ 958.52891441,  958.96010062,  942.99151455,  530.65626583])
-                distortion_parameters = np.array([-0.0470827,   0.03875457, -0.05329628,  0.02248648])
-            else:
-                projection_parameters = np.array([ 964.95906655,  963.62286454,  934.12950576,  554.10826309])
-                distortion_parameters = np.array([-0.02215442, -0.01881507,  0.00199917,  0.00470936])
+            # if not cam.initGeometryFromObservations(observations):
+                #raise RuntimeError("Could not initialize the intrinsics for camera with topic: {0}. Try to use --verbose and check whether the calibration target extraction is successful.".format(topic))
+            projection_parameters = np.array(intrinsics[topic]['K'])
+            distortion_parameters = np.array(intrinsics[topic]['D'])
+
             #cam.geometry.projection().setParameters(np.hstack((projection_parameters, distortion_parameters)).reshape((8,-1)), True, True, False)
             cam.geometry.projection().setParameters(projection_parameters.reshape((4,-1)))
             cam.geometry.projection().distortion().setParameters(distortion_parameters.reshape((4,-1)))
+            cam.isGeometryInitialized = True
             
             print "\tProjection initialized to: %s" % cam.geometry.projection().getParameters().flatten()
             print "\tDistortion initialized to: %s" % cam.geometry.projection().distortion().getParameters().flatten()
