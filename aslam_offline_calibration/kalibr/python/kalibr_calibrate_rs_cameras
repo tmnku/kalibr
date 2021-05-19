@@ -176,11 +176,8 @@ def main():
     calibrator.calibrate(cameraGeometry, observations, config)
 
     K, D = calibrator.get_result()
-    yaml_dict = dict()
-    yaml_dict[parsed.topic]['K'] = K.tolist()
-    yaml_dict[parsed.topic]['D'] = D.tolist()
     with open(parsed.intrinsics, 'w') as f:
-        yaml.safe_dump(yaml_dict, f)
+        yaml.safe_dump({parsed.topic: {'K':K.tolist(), 'D':D.tolist()}}, f)
 
 if __name__ == "__main__":
     try:
